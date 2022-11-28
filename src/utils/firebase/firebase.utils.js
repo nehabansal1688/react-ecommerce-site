@@ -1,12 +1,14 @@
+import React from 'react';
+
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInWithRedirect,
   signInWithPopup,
-  googleAuthProvider,
+  GoogleAuthProvider,
 } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: 'AIzaSyB3TksPjkcdLO1W6vkFHjZxYCOK7ZtFGiw',
   authDomain: 'crwn-clothing-db-neha.firebaseapp.com',
@@ -16,13 +18,38 @@ const firebaseConfig = {
   appId: '1:961323804083:web:7269d61488694fde6217c6',
 };
 
-// Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
 
-const provider = new googleAuthProvider();
+const provider = new GoogleAuthProvider();
+
 provider.setCustomParameters({
   prompt: 'select_account',
 });
 
-export const auth = gethAuth();
+export const auth = getAuth();
 export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
+
+export const db = getFirestore();
+
+export const createUserDocumentFromAuth = async (userAuth) => {
+  const userDocRef = doc(db, 'users', userAuth.uid);
+
+  const userSnapshot = await getDoc(userDocRef);
+
+  if (!userSnapshot.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+
+    try {
+      await setDoc(userDocRef, {
+        displayName,
+        email,
+        createdAt,
+      });
+    } catch (error) {
+      console.log('error creating the user', error.message);
+    }
+  }
+
+  return userDocRef;
+};
